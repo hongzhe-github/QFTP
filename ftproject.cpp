@@ -14,6 +14,7 @@ FTProject::~FTProject()
     delete ui;
 }
 
+// 开始发送按钮
 void FTProject::on_pushButtonSendFile_clicked()
 {
     // 获取文件名和路径
@@ -43,8 +44,6 @@ void FTProject::on_pushButtonSendFile_clicked()
 
     // 创建套接字并连接到目标主机
     QTcpSocket *socket = new QTcpSocket(this);
-
-
     socket->connectToHost(ip, port);
 
     // 等待连接成功
@@ -97,8 +96,7 @@ void FTProject::on_pushButtonSendFile_clicked()
     socket->close();
     socket->deleteLater();
     QMessageBox::information(this, "阿狸文件工具", "文件已经成功发送！",QMessageBox::Ok);
-
-
+    return;
 }
 
 // 选择文件
@@ -108,9 +106,17 @@ void FTProject::on_pushButtonSelectFile_clicked()
     ui->lineEditSendFile->setText(myHelper::GetFileName(strFilter));
 }
 
-
+// 开始监听按钮
 void FTProject::on_ListenButton_clicked()
 {
+    // 判断保存文件路径是否存在
+    QFileInfo fileInfo(ui->lineEditSavePath->text());
+    if(!fileInfo.exists())
+    {
+        QMessageBox::critical(this, "错误", "未正确选择保存路径！");
+        return;
+    }
+
     // 创建服务器并开始监听
     server = new QTcpServer(this);
     if(!server->listen(QHostAddress::Any, ui->spinBoxServerPort->value()))
@@ -123,7 +129,7 @@ void FTProject::on_ListenButton_clicked()
     connect(server, &QTcpServer::newConnection, this, &FTProject::acceptConnection);
 
     // 获取服务器地址并将其显示在lineEditReceiverIP组件中
-    QString IpAddress = getHostIpAddress();
+    QString IpAddress = myHelper::getHostIpAddress();
 
     // 更新状态信息
     ui->lineEditReceiverIP->setText(IpAddress);
@@ -134,26 +140,9 @@ void FTProject::on_ListenButton_clicked()
 }
 
 
-// 获取IPV4地址
-QString FTProject::getHostIpAddress()
-{
-    QString strIpAddress;
-    QList<QHostAddress> ipAddressesList = QNetworkInterface::allAddresses();
-    // 获取第一个本主机的IPv4地址
-    for (auto ipAddress : ipAddressesList) {
-        if (ipAddress.protocol() == QAbstractSocket::IPv4Protocol &&
-            !ipAddress.isLoopback()) {
-            strIpAddress = ipAddress.toString();
-            break;
-        }
-    }
-    // 如果没有找到，则以本地IP地址为IP
-    if (strIpAddress.isEmpty())
-        strIpAddress = QHostAddress(QHostAddress::LocalHost).toString();
-    return strIpAddress;
-}
 
 
+// 接收文件函数
 void FTProject::acceptConnection()
 {
     // 获取已连接的套接字
@@ -178,7 +167,8 @@ void FTProject::acceptConnection()
     }
 
     // 打开本地文件用于接收数据
-    QString saveFilePath = "./" + fileName;
+    QString saveFilePath = ui->lineEditSavePath->text() + "/" + fileName;
+
     QFile file(saveFilePath);
     if (!file.open(QIODevice::WriteOnly))
     {
@@ -221,5 +211,13 @@ void FTProject::on_pushButtonStopListening_clicked()
     ui->ListenButton->setEnabled(true);
     ui->ListenButton->setText("开始监听");
     ui->lineEditReceiveStatus->setText("未开启监听");
+}
+
+// 选择文件夹路径
+void FTProject::on_pushButtonSelectSavePath_clicked()
+{
+    // 显示选择路径的line Edit控件(objectName:lineEditSavePath)
+    QString saveDirPath = QFileDialog::getExistingDirectory(this, "选择保存文件的路径");
+    ui->lineEditSavePath->setText(saveDirPath);
 }
 

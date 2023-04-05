@@ -28,6 +28,8 @@ private slots:
     void on_ListenButton_clicked();
     void on_pushButtonStopListening_clicked();
 
+    void on_pushButtonSelectSavePath_clicked();
+
 private:
     void acceptConnection();
     QString getHostIpAddress();
