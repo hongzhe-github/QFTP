@@ -142,6 +142,7 @@ void FTProject::on_ListenButton_clicked()
 
 
 
+
 // 接收文件函数
 void FTProject::acceptConnection()
 {
@@ -159,10 +160,6 @@ void FTProject::acceptConnection()
 
     if (socket->waitForReadyRead())
     {
-
-        // 计算接收进度并更新进度条
-        double receiveProgress = (double)bytesReceived / (double)fileSize;
-        ui->progressBarReceiveProgress->setValue(receiveProgress * 100);
         in >> bytesReceived >> fileNameSize >> fileName >> fileSize;
     }
 
@@ -176,29 +173,32 @@ void FTProject::acceptConnection()
         return;
     }
 
-
     // 接收文件
     QByteArray buffer;
     while (bytesReceived < fileSize)
     {
-        if (socket->bytesAvailable() > 0) {
-            buffer = socket->read(qMin(socket->bytesAvailable(), (qint64)8192));
+        if (socket->waitForReadyRead(30000)) // 等待数据30秒
+        {
+            buffer = socket->readAll();
             bytesReceived += buffer.size();
             file.write(buffer);
             // 计算接收进度并更新进度条
             double receiveProgress = (double)bytesReceived / (double)fileSize;
             ui->progressBarReceiveProgress->setValue(receiveProgress * 100);
-        } else {
-            socket->waitForReadyRead(100);
+        }
+        else
+        {
+            QMessageBox::critical(this, "Error", "接收文件超时！");
+            break;
         }
     }
-
 
     // 关闭文件和套接字
     file.close();
     socket->close();
     socket->deleteLater();
 }
+
 
 
 // 停止监听按钮
