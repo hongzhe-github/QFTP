@@ -1,5 +1,8 @@
-QT       += core gui
-QT       += core network
+QT += core gui
+QT += core network
+
+#LIBS += -lGLESv2
+#ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -17,7 +20,8 @@ SOURCES += \
 HEADERS += \
     ../build-QFTP-Desktop_Qt_6_3_2_MinGW_64_bit-Debug/ui_ftproject.h \
     ftproject.h \
-    myhelper.h
+    myhelper.h \
+    ui_ftproject.h
 
 FORMS += \
     ftproject.ui
@@ -29,3 +33,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
     images.qrc
+
+
