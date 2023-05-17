@@ -2,7 +2,10 @@
 #include "ui_ftproject.h"
 #include "myhelper.h"
 
-FTProject::FTProject(QWidget *parent)
+// 创建临时myHelper对象
+myHelper helper;
+
+FTProject::FTProject(QWidget* parent)
     : QDialog(parent)
     , ui(new Ui::FTProject)
 {
@@ -31,8 +34,11 @@ void FTProject::on_pushButtonSendFile_clicked()
         QMessageBox::critical(this, "Error", "File does not exist");
         return;
     }
+
+
+
     // 校验IP合法性
-    bool ip_is_valid = myHelper::IsVaild_IP(ip);
+    bool ip_is_valid = helper.IsVaild_IP(ip);
 
     if(!ip_is_valid)
     {
@@ -43,7 +49,7 @@ void FTProject::on_pushButtonSendFile_clicked()
 
 
     // 创建套接字并连接到目标主机
-    QTcpSocket *socket = new QTcpSocket(this);
+    QTcpSocket* socket = new QTcpSocket(this);
     socket->connectToHost(ip, port);
 
     // 等待连接成功
@@ -95,7 +101,7 @@ void FTProject::on_pushButtonSendFile_clicked()
     // 关闭套接字
     socket->close();
     socket->deleteLater();
-    QMessageBox::information(this, "阿狸文件工具", "文件已经成功发送！",QMessageBox::Ok);
+    QMessageBox::information(this, "阿狸文件工具", "文件已经成功发送！", QMessageBox::Ok);
     return;
 }
 
@@ -103,7 +109,7 @@ void FTProject::on_pushButtonSendFile_clicked()
 void FTProject::on_pushButtonSelectFile_clicked()
 {
     QString strFilter = "所有文件(*.*)";
-    ui->lineEditSendFile->setText(myHelper::GetFileName(strFilter));
+    ui->lineEditSendFile->setText(helper.GetFileName(strFilter));
 }
 
 // 开始监听按钮
@@ -129,7 +135,7 @@ void FTProject::on_ListenButton_clicked()
     connect(server, &QTcpServer::newConnection, this, &FTProject::acceptConnection);
 
     // 获取服务器地址并将其显示在lineEditReceiverIP组件中
-    QString IpAddress = myHelper::getHostIpAddress();
+    QString IpAddress = helper.getHostIpAddress();
 
     // 更新状态信息
     ui->lineEditReceiverIP->setText(IpAddress);
@@ -141,24 +147,22 @@ void FTProject::on_ListenButton_clicked()
 
 
 
-
-
 // 接收文件函数
 void FTProject::acceptConnection()
 {
     // 获取已连接的套接字
-    QTcpSocket *socket = server->nextPendingConnection();
+    QTcpSocket* socket = server->nextPendingConnection();
 
     // 读取文件名和文件大小
     QDataStream in(socket);
-    in.setVersion(QDataStream::Qt_6_3);
+    in.setVersion(QDataStream::Qt_6_2);
 
     qint64 bytesReceived = 0;
     qint64 fileNameSize = 0;
     QString fileName;
     qint64 fileSize = 0;
 
-    if (socket->waitForReadyRead())
+    if(socket->waitForReadyRead())
     {
         in >> bytesReceived >> fileNameSize >> fileName >> fileSize;
     }
@@ -167,7 +171,7 @@ void FTProject::acceptConnection()
     QString saveFilePath = ui->lineEditSavePath->text() + "/" + fileName;
 
     QFile file(saveFilePath);
-    if (!file.open(QIODevice::WriteOnly))
+    if(!file.open(QIODevice::WriteOnly))
     {
         QMessageBox::critical(this, "Error", "Could not open file");
         return;
@@ -175,9 +179,9 @@ void FTProject::acceptConnection()
 
     // 接收文件
     QByteArray buffer;
-    while (bytesReceived < fileSize)
+    while(bytesReceived < fileSize)
     {
-        if (socket->waitForReadyRead(30000)) // 等待数据30秒
+        if(socket->waitForReadyRead(30000))  // 等待数据30秒
         {
             buffer = socket->readAll();
             bytesReceived += buffer.size();
